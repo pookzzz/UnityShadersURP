@@ -12,6 +12,7 @@ namespace EffectsLab.Sample001.Editor
         private const string Root = "Assets/EffectsLab/Sample001_HoloDissolve";
         private const string Generated = Root + "/Generated";
         private const string MaterialPath = Generated + "/HoloDissolveCard_Demo.mat";
+        private const string FloorMaterialPath = Generated + "/HoloDissolveGround_Demo.mat";
         private const string ScenePath = Generated + "/HoloDissolveCard_Demo.unity";
 
         [MenuItem("Realtime Effects Lab/Sample 001/Create Holo Dissolve Demo")]
@@ -26,24 +27,10 @@ namespace EffectsLab.Sample001.Editor
                 return;
             }
 
-            Material material = AssetDatabase.LoadAssetAtPath<Material>(MaterialPath);
-            if (material == null)
-            {
-                material = new Material(shader)
-                {
-                    name = "HoloDissolveCard_Demo"
-                };
-                material.SetColor("_BaseColor", new Color(0.025f, 0.055f, 0.11f, 0.96f));
-                material.SetColor("_HoloColor", new Color(0.16f, 0.95f, 1.0f, 1f));
-                material.SetColor("_EdgeColor", new Color(1.0f, 0.18f, 0.65f, 1f));
-                material.SetFloat("_Emission", 2.6f);
-                material.SetFloat("_NoiseScale", 8.0f);
-                material.SetFloat("_EdgeWidth", 0.06f);
-                AssetDatabase.CreateAsset(material, MaterialPath);
-            }
+            Material material = GetOrCreateCardMaterial(shader);
+            Material floorMaterial = GetOrCreateFloorMaterial();
 
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            scene.name = "HoloDissolveCard_Demo";
 
             GameObject cameraObject = new GameObject("Main Camera");
             Camera camera = cameraObject.AddComponent<Camera>();
@@ -89,9 +76,6 @@ namespace EffectsLab.Sample001.Editor
             floor.name = "Ground";
             floor.transform.position = new Vector3(0f, -2.0f, 1f);
             floor.transform.localScale = new Vector3(1.5f, 1f, 1.5f);
-            Material floorMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-            floorMaterial.name = "DemoGround_Runtime";
-            floorMaterial.SetColor("_BaseColor", new Color(0.012f, 0.016f, 0.028f, 1f));
             floor.GetComponent<Renderer>().sharedMaterial = floorMaterial;
 
             RenderSettings.ambientMode = AmbientMode.Flat;
@@ -105,6 +89,37 @@ namespace EffectsLab.Sample001.Editor
             AssetDatabase.Refresh();
 
             Debug.Log($"Realtime Effects Lab Sample 001 created: {ScenePath}. Press Play to preview the looping dissolve and card rotation.");
+        }
+
+        private static Material GetOrCreateCardMaterial(Shader shader)
+        {
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(MaterialPath);
+            if (material != null)
+                return material;
+
+            material = new Material(shader) { name = "HoloDissolveCard_Demo" };
+            material.SetColor("_BaseColor", new Color(0.025f, 0.055f, 0.11f, 0.96f));
+            material.SetColor("_HoloColor", new Color(0.16f, 0.95f, 1.0f, 1f));
+            material.SetColor("_EdgeColor", new Color(1.0f, 0.18f, 0.65f, 1f));
+            material.SetFloat("_Emission", 2.6f);
+            material.SetFloat("_NoiseScale", 8.0f);
+            material.SetFloat("_EdgeWidth", 0.06f);
+            AssetDatabase.CreateAsset(material, MaterialPath);
+            return material;
+        }
+
+        private static Material GetOrCreateFloorMaterial()
+        {
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(FloorMaterialPath);
+            if (material != null)
+                return material;
+
+            Shader lit = Shader.Find("Universal Render Pipeline/Lit");
+            material = new Material(lit) { name = "HoloDissolveGround_Demo" };
+            material.SetColor("_BaseColor", new Color(0.012f, 0.016f, 0.028f, 1f));
+            material.SetFloat("_Smoothness", 0.7f);
+            AssetDatabase.CreateAsset(material, FloorMaterialPath);
+            return material;
         }
 
         private static void EnsureFolder(string path)
